@@ -73,19 +73,12 @@ const DashboardLayout = ({ children }) => {
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsMobileOpen(false)}
-                className={`relative flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-sm transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold text-sm transition-all ${
                   isActive 
-                    ? 'text-white' 
+                    ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/10' 
                     : 'text-brand-muted hover:bg-brand-bg/50 hover:text-brand-text'
                 }`}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeNavBg"
-                    className="absolute inset-0 bg-primary-500 rounded-lg -z-10 shadow-sm"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
                 <Icon className="h-4.5 w-4.5" />
                 {item.name}
               </Link>
