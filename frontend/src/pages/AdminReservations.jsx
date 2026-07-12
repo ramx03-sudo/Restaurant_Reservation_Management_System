@@ -1,17 +1,34 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/client';
 import DashboardLayout from '../layouts/DashboardLayout';
 import ConfirmationDialog from '../components/ConfirmationDialog';
+import { formatHumanDate, formatHumanTime } from '../utils/dateHelper';
 import { toast } from 'react-hot-toast';
-import { Trash2, XCircle } from 'lucide-react';
+import { XCircle, Edit, Calendar } from 'lucide-react';
+
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+
+const editReservationSchema = z.object({
+  reservationDate: z.string().regex(dateRegex, 'Invalid date format (YYYY-MM-DD)'),
+  startTime: z.string().regex(timeRegex, 'Please select a start time'),
+  guestCount: z.preprocess(
+    (val) => parseInt(val, 10),
+    z.number().int().positive('Guest count must be a positive integer')
+  ),
+  notes: z.string().optional(),
+});
 
 const AdminReservations = () => {
   const queryClient = useQueryClient();
   const [filterDate, setFilterDate] = useState('');
-  const [selectedResId, setSelectedResId] = useState(null);
+  const [selectedRes, setSelectedRes] = useState(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch reservations based on date filter
   const { data: reservationsResponse, isLoading } = useQuery({
@@ -22,6 +39,15 @@ const AdminReservations = () => {
         : '/admin/reservations';
       return apiClient.get(url);
     },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(editReservationSchema),
   });
 
   // Cancel Mutation (Updates status to cancelled)
@@ -37,38 +63,43 @@ const AdminReservations = () => {
     }
   });
 
-  // Permanent Delete Mutation
-  const deleteMutation = useMutation({
-    mutationFn: (id) => apiClient.delete(`/admin/reservations/${id}`),
+  // Edit details Mutation
+  const editMutation = useMutation({
+    mutationFn: ({ id, data }) => apiClient.put(`/admin/reservations/${id}/details`, data),
     onSuccess: (response) => {
-      toast.success(response.message || 'Reservation permanently deleted.');
+      toast.success(response.message || 'Reservation updated successfully.');
+      setIsEditModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['adminReservations'] });
       queryClient.invalidateQueries({ queryKey: ['adminMetrics'] });
     },
     onError: (error) => {
-      toast.error(error.message || 'Failed to delete reservation.');
+      toast.error(error.message || 'Failed to update reservation.');
     }
   });
 
-  const handleCancelClick = (id) => {
-    setSelectedResId(id);
+  const handleCancelClick = (res) => {
+    setSelectedRes(res);
     setIsCancelModalOpen(true);
   };
 
-  const handleDeleteClick = (id) => {
-    setSelectedResId(id);
-    setIsDeleteModalOpen(true);
+  const handleEditClick = (res) => {
+    setSelectedRes(res);
+    setValue('reservationDate', res.reservationDate);
+    setValue('startTime', res.startTime);
+    setValue('guestCount', res.guestCount);
+    setValue('notes', res.notes || '');
+    setIsEditModalOpen(true);
   };
 
   const handleConfirmCancel = () => {
-    if (selectedResId) {
-      cancelMutation.mutate(selectedResId);
+    if (selectedRes) {
+      cancelMutation.mutate(selectedRes._id);
     }
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedResId) {
-      deleteMutation.mutate(selectedResId);
+  const onEditSubmit = (data) => {
+    if (selectedRes) {
+      editMutation.mutate({ id: selectedRes._id, data });
     }
   };
 
@@ -80,7 +111,7 @@ const AdminReservations = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold font-serif text-gray-900">Manage Reservations</h2>
-            <p className="text-gray-500 font-medium mt-1">Oversee, search, and manage all dining bookings.</p>
+            <p className="text-gray-500 font-medium mt-1">Oversee and edit dining bookings.</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -132,9 +163,9 @@ const AdminReservations = () => {
                       <td className="p-4 font-semibold text-gray-800">
                         {res.tableId?.tableNumber || 'Auto-Allocated'}
                       </td>
-                      <td className="p-4 text-gray-600">{res.reservationDate}</td>
-                      <td className="p-4 text-gray-600">{res.startTime} - {res.endTime}</td>
-                      <td className="p-4 text-gray-600">{res.guestCount}</td>
+                      <td className="p-4 text-gray-600 font-semibold">{formatHumanDate(res.reservationDate)}</td>
+                      <td className="p-4 text-gray-600">{formatHumanTime(res.startTime)} - {formatHumanTime(res.endTime)}</td>
+                      <td className="p-4 text-gray-600">{res.guestCount} guests</td>
                       <td className="p-4 text-gray-500 max-w-xs truncate" title={res.notes}>
                         {res.notes || '-'}
                       </td>
@@ -150,23 +181,25 @@ const AdminReservations = () => {
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
                           {res.status === 'confirmed' && (
-                            <button
-                              onClick={() => handleCancelClick(res._id)}
-                              className="text-xs font-bold text-red-600 hover:text-red-800 transition-colors py-1.5 px-3 rounded bg-red-50 hover:bg-red-100 flex items-center gap-1"
-                              title="Cancel Reservation"
-                            >
-                              <XCircle className="h-3.5 w-3.5" />
-                              Cancel
-                            </button>
+                            <>
+                              <button
+                                onClick={() => handleEditClick(res)}
+                                className="text-xs font-bold text-primary-600 hover:text-primary-800 transition-colors py-1.5 px-3 rounded bg-primary-50 hover:bg-primary-100 flex items-center gap-1"
+                                title="Edit Reservation"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleCancelClick(res)}
+                                className="text-xs font-bold text-red-600 hover:text-red-800 transition-colors py-1.5 px-3 rounded bg-red-50 hover:bg-red-100 flex items-center gap-1"
+                                title="Cancel Reservation"
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                                Cancel
+                              </button>
+                            </>
                           )}
-                          <button
-                            onClick={() => handleDeleteClick(res._id)}
-                            className="text-xs font-bold text-gray-600 hover:text-gray-800 transition-colors py-1.5 px-3 rounded bg-gray-50 hover:bg-gray-100 flex items-center gap-1"
-                            title="Permanently Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5 text-gray-500" />
-                            Delete
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -178,23 +211,110 @@ const AdminReservations = () => {
         </div>
       </div>
 
+      {/* Cancel Modal */}
       <ConfirmationDialog
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         onConfirm={handleConfirmCancel}
         title="Cancel Reservation?"
-        message="Are you sure you want to cancel this booking? This will update the status to 'cancelled'."
+        message="Are you sure you want to cancel this booking? This will release the table."
         confirmText="Yes, Cancel"
       />
 
-      <ConfirmationDialog
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Permanently Delete Reservation?"
-        message="Are you sure you want to permanently delete this reservation record from the database?"
-        confirmText="Yes, Delete"
-      />
+      {/* Edit Details Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center p-4 text-center">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsEditModalOpen(false)}></div>
+
+            <div className="relative transform overflow-hidden rounded-lg bg-white p-6 text-left shadow-xl transition-all w-full max-w-md">
+              <h3 className="text-lg font-bold font-serif leading-6 text-gray-900 mb-4 flex items-center gap-2">
+                <Edit className="h-5 w-5 text-primary-500" />
+                Edit Reservation Details
+              </h3>
+              
+              <form onSubmit={handleSubmit(onEditSubmit)} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Reservation Date</label>
+                  <input
+                    type="date"
+                    {...register('reservationDate')}
+                    className={`w-full px-4 py-2 rounded-lg border bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${
+                      errors.reservationDate ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-primary-500'
+                    }`}
+                  />
+                  {errors.reservationDate && (
+                    <p className="mt-1 text-xs text-red-600 font-semibold">{errors.reservationDate.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
+                  <select
+                    {...register('startTime')}
+                    className={`w-full px-4 py-2 rounded-lg border bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${
+                      errors.startTime ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-primary-500'
+                    }`}
+                  >
+                    <option value="12:00">12:00 PM</option>
+                    <option value="13:00">1:00 PM</option>
+                    <option value="14:00">2:00 PM</option>
+                    <option value="17:00">5:00 PM</option>
+                    <option value="18:00">6:00 PM</option>
+                    <option value="19:00">7:00 PM</option>
+                    <option value="20:00">8:00 PM</option>
+                    <option value="21:00">9:00 PM</option>
+                  </select>
+                  {errors.startTime && (
+                    <p className="mt-1 text-xs text-red-600 font-semibold">{errors.startTime.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Guests Count</label>
+                  <input
+                    type="number"
+                    {...register('guestCount')}
+                    min="1"
+                    className={`w-full px-4 py-2 rounded-lg border bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${
+                      errors.guestCount ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-primary-500'
+                    }`}
+                  />
+                  {errors.guestCount && (
+                    <p className="mt-1 text-xs text-red-600 font-semibold">{errors.guestCount.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Notes</label>
+                  <textarea
+                    {...register('notes')}
+                    rows="2"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                  ></textarea>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editMutation.isPending}
+                    className="inline-flex justify-center rounded-md border border-transparent bg-primary-500 hover:bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-md disabled:bg-primary-300"
+                  >
+                    {editMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

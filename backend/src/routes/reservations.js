@@ -6,6 +6,7 @@ const validate = require('../middleware/validate');
 const { createReservationSchema, cancelReservationSchema } = require('../validations/reservationValidation');
 
 // Customer endpoints
+router.get('/availability', auth, reservationController.checkAvailability);
 router.post('/', auth, validate(createReservationSchema), reservationController.createReservation);
 router.get('/my', auth, reservationController.getMyReservations);
 router.delete('/:id', auth, validate(cancelReservationSchema), reservationController.cancelReservation);

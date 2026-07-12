@@ -33,7 +33,7 @@ class ReservationRepository {
     return await Reservation.findByIdAndDelete(id);
   }
 
-  async findOverlapping(tableId, date, start, end, session = null) {
+  async findOverlapping(tableId, date, start, end, excludeReservationId = null, session = null) {
     const query = {
       tableId,
       reservationDate: date,
@@ -45,6 +45,10 @@ class ReservationRepository {
         }
       ]
     };
+    
+    if (excludeReservationId) {
+      query._id = { $ne: excludeReservationId };
+    }
     
     if (session) {
       return await Reservation.findOne(query).session(session);

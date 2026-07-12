@@ -6,10 +6,8 @@ const { addHoursToTime } = require('../utils/timeHelper');
 
 class ReservationService {
   async createReservation(customerId, reservationDate, startTime, guestCount, notes) {
-    // 1. Calculate end time (default 2 hours)
     const endTime = addHoursToTime(startTime, 2);
 
-    // 2. Wrap in transaction logic with fallback for standalone local DBs
     let session = null;
     try {
       session = await mongoose.startSession();
@@ -31,15 +29,11 @@ class ReservationService {
       if (session) {
         try {
           await session.abortTransaction();
-        } catch (abortError) {
-          // Suppress abort errors if transaction failed to start
-        }
+        } catch (abortError) {}
       }
 
-      // Check if error is related to transactions not supported (e.g. standalone Mongo)
       if (error.message.includes('transaction') || error.code === 20 || error.message.includes('replica set')) {
-        console.warn('Transactions not supported by MongoDB server. Retrying without transaction.');
-        // Retry without transaction
+        console.warn('Transactions not supported. Retrying without transaction.');
         return await this.allocateTableAndCreate(
           customerId,
           reservationDate,
@@ -52,18 +46,12 @@ class ReservationService {
       }
       throw error;
     } finally {
-      if (session) {
-        session.endSession();
-      }
+      if (session) session.endSession();
     }
   }
 
-  // Pure allocation logic
   async allocateTableAndCreate(customerId, date, startTime, endTime, guestCount, notes, session = null) {
-    // Find all active tables
     const tables = await tableRepository.findActive();
-
-    // Filter tables where capacity >= guestCount, sorted by capacity ASC (smallest table first)
     const candidateTables = tables.filter(t => t.capacity >= guestCount);
 
     if (candidateTables.length === 0) {
@@ -71,20 +59,19 @@ class ReservationService {
     }
 
     let allocatedTable = null;
-
-    // Iterate through candidates to find the first one with no overlapping reservations
     for (const table of candidateTables) {
       const overlap = await reservationRepository.findOverlapping(
         table._id,
         date,
         startTime,
         endTime,
+        null,
         session
       );
 
       if (!overlap) {
         allocatedTable = table;
-        break; // Smallest suitable table with no conflict found
+        break;
       }
     }
 
@@ -92,7 +79,6 @@ class ReservationService {
       throw new AppError('No available tables for the selected date and time', 409);
     }
 
-    // Create the reservation
     const reservation = await reservationRepository.create({
       customerId,
       tableId: allocatedTable._id,
@@ -107,6 +93,80 @@ class ReservationService {
     return await reservation.populate('tableId');
   }
 
+  async checkAvailability(date, startTime, guestCount) {
+    const endTime = addHoursToTime(startTime, 2);
+    const tables = await tableRepository.findActive();
+    const candidateTables = tables.filter(t => t.capacity >= guestCount);
+
+    if (candidateTables.length === 0) {
+      return { available: false };
+    }
+
+    for (const table of candidateTables) {
+      const overlap = await reservationRepository.findOverlapping(
+        table._id,
+        date,
+        startTime,
+        endTime,
+        null,
+        null
+      );
+
+      if (!overlap) {
+        return { available: true, table: table.tableNumber };
+      }
+    }
+
+    return { available: false };
+  }
+
+  async updateReservationDetails(id, date, startTime, guestCount, notes) {
+    const endTime = addHoursToTime(startTime, 2);
+    const reservation = await reservationRepository.findById(id);
+    if (!reservation) {
+      throw new AppError('Reservation not found', 404);
+    }
+
+    // Find active tables
+    const tables = await tableRepository.findActive();
+    const candidateTables = tables.filter(t => t.capacity >= guestCount);
+
+    if (candidateTables.length === 0) {
+      throw new AppError('No tables can accommodate this guest count', 400);
+    }
+
+    let allocatedTable = null;
+    for (const table of candidateTables) {
+      // Exclude current reservation from overlap checks so it doesn't conflict with itself
+      const overlap = await reservationRepository.findOverlapping(
+        table._id,
+        date,
+        startTime,
+        endTime,
+        id,
+        null
+      );
+
+      if (!overlap) {
+        allocatedTable = table;
+        break;
+      }
+    }
+
+    if (!allocatedTable) {
+      throw new AppError('No available tables for the selected date and time', 409);
+    }
+
+    return await reservationRepository.update(id, {
+      reservationDate: date,
+      startTime,
+      endTime,
+      guestCount,
+      notes,
+      tableId: allocatedTable._id
+    });
+  }
+
   async getMyReservations(customerId) {
     return await reservationRepository.findMyReservations(customerId);
   }
@@ -117,7 +177,6 @@ class ReservationService {
       throw new AppError('Reservation not found', 404);
     }
 
-    // Check auth
     if (role !== 'admin' && reservation.customerId._id.toString() !== userId.toString()) {
       throw new AppError('Not authorized to cancel this reservation', 403);
     }
@@ -125,7 +184,6 @@ class ReservationService {
     return await reservationRepository.update(id, { status: 'cancelled' });
   }
 
-  // Admin services
   async getAllReservations(query = {}) {
     return await reservationRepository.findAll(query);
   }
@@ -155,16 +213,43 @@ class ReservationService {
     const cancelledReservations = reservations.filter(r => r.status === 'cancelled').length;
     const totalTables = tables.length;
 
-    // Calculate Occupancy % based on active tables vs total tables
-    // In a real system, occupancy might be calculated for "today" or a specific slot.
-    // For simplicity, we can define occupancy rate as: (Active bookings / (Total Tables * total slots in a day)) 
-    // Or simpler: percentage of tables that have at least one active booking overall.
-    const tablesWithBookings = new Set(reservations.filter(r => r.status === 'confirmed').map(r => r.tableId?._id?.toString()));
-    const activeTablesCount = Array.from(tablesWithBookings).filter(id => tables.some(t => t._id.toString() === id)).length;
-    
-    const occupancyPercentage = totalTables > 0 
-      ? Math.round((activeTablesCount / totalTables) * 100) 
+    // Operational Metrics calculations
+    const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local timezone
+
+    // Today's Reservations count (confirmed status)
+    const todayReservations = reservations.filter(r => r.reservationDate === todayStr && r.status === 'confirmed');
+    const todayCount = todayReservations.length;
+
+    // Occupied active seats today (sum of guests for confirmed bookings)
+    const occupiedSeatsToday = todayReservations.reduce((sum, r) => sum + r.guestCount, 0);
+
+    // Total seats overall (sum of capacity of all active tables)
+    const activeTables = tables.filter(t => t.isActive);
+    const totalActiveSeats = activeTables.reduce((sum, t) => sum + t.capacity, 0);
+
+    // Occupancy percentage formula: occupied active seats today / total active seats * 100
+    const occupancyPercentage = totalActiveSeats > 0
+      ? Math.round((occupiedSeatsToday / totalActiveSeats) * 100)
       : 0;
+
+    // Next upcoming active reservation (confirmed, today or in future)
+    const upcomingReservations = reservations
+      .filter(r => r.status === 'confirmed' && r.reservationDate >= todayStr)
+      .sort((a, b) => {
+        if (a.reservationDate !== b.reservationDate) {
+          return a.reservationDate.localeCompare(b.reservationDate);
+        }
+        return a.startTime.localeCompare(b.startTime);
+      });
+
+    const nextReservation = upcomingReservations.length > 0
+      ? {
+          time: `${upcomingReservations[0].reservationDate} at ${upcomingReservations[0].startTime}`,
+          table: upcomingReservations[0].tableId?.tableNumber,
+          customer: upcomingReservations[0].customerId?.name,
+          guests: upcomingReservations[0].guestCount
+        }
+      : null;
 
     return {
       totalReservations,
@@ -172,6 +257,8 @@ class ReservationService {
       cancelledReservations,
       totalTables,
       occupancyPercentage,
+      todayCount,
+      nextReservation
     };
   }
 }

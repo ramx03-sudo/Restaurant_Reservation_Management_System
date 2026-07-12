@@ -110,17 +110,42 @@ Maintains dining slots and links users with tables.
 
 ## 4. Reservation & Allocation Engine
 
-### Rules
+### Allocation Rules
 1. **Double Booking Prevention**: A table cannot have overlapping active reservations on the same date and time.
 2. **Standard Duration**: Reservations are set to a default of **2 hours**.
 3. **Table Suitability**: Guest count must fit the table capacity. The engine automatically assigns the **smallest available table** that can accommodate the guests.
-   - Example: 3 guests request a table. Available tables: Table A (4 seats), Table B (8 seats). The engine reserves Table A.
 4. **Race-Condition Safety**: Bookings are performed inside a **MongoDB Transaction** session. If two users concurrently book the last table for the exact same slot, MongoDB's write-lock aborts the concurrent commit, throwing a `409 Conflict` instead of double-booking.
 5. **Stand-alone Fallback**: If the local MongoDB server does not support transactions (e.g. running on a local standalone deployment instead of a replica set), the system gracefully logs a warning and performs allocation using standard model queries.
+
+### Step-by-Step Conflict & Selection Walkthrough
+Imagine the restaurant has the following tables configured:
+* `Table 1` (2 seats)
+* `Table 2` (2 seats)
+* `Table 3` (4 seats)
+* `Table 4` (4 seats)
+* `Table 5` (6 seats)
+* `Table 6` (8 seats)
+
+**Scenario 1: Customer requests a booking for 5 guests at 2:00 PM**
+1. The engine queries for active tables that can accommodate the party size ($capacity \ge 5$).
+   - Eligible candidates: `Table 5` (6 seats) and `Table 6` (8 seats).
+2. The candidates are sorted ascending by capacity to prioritize the smallest suitable layout first: `[Table 5, Table 6]`.
+3. The engine checks `Table 5` for any overlapping confirmed bookings on the selected date between 2:00 PM and 4:00 PM.
+   - If **no overlap** is found, `Table 5` is allocated.
+   - If an **overlap** exists (e.g. Table 5 is already booked), the engine moves to `Table 6`.
+4. If `Table 6` has no overlap, it is allocated.
+5. If **both** `Table 5` and `Table 6` are already occupied during that window, the engine aborts the transaction and returns a `409 Conflict` status code.
 
 ### Overlap Condition
 Two bookings overlap if:
 $$(StartTime_{Requested} < EndTime_{Existing}) \land (EndTime_{Requested} > StartTime_{Existing})$$
+
+### Occupancy Percentage Formula
+The Admin Dashboard calculates real-time occupancy percentage based on active capacity:
+$$\text{Occupancy \%} = \left( \frac{\text{Occupied Active Seats Today}}{\text{Total Seating Capacity of Active Tables}} \right) \times 100$$
+* **Occupied Active Seats Today**: The sum of `guestCount` for all `'confirmed'` reservations scheduled for today's date.
+* **Total Seating Capacity**: The sum of `capacity` for all tables marked as `isActive: true`.
+* *Example*: If total active capacity is 26 seats, and there is one active booking today for 5 guests, the occupancy rate is $\frac{5}{26} \times 100 = 19.2\%$ (rounded to $19\%$).
 
 ---
 

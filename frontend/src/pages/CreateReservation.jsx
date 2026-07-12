@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import apiClient from '../api/client';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { toast } from 'react-hot-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
 const reservationFormSchema = z.object({
   reservationDate: z.string().regex(dateRegex, 'Invalid date format'),
-  startTime: z.string().regex(timeRegex, 'Invalid time format (HH:MM)'),
+  startTime: z.string().regex(timeRegex, 'Please select a start time'),
   guestCount: z.preprocess(
     (val) => parseInt(val, 10),
     z.number().int().positive('Guest count must be a positive integer')
@@ -24,15 +24,34 @@ const reservationFormSchema = z.object({
 
 const CreateReservation = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(reservationFormSchema),
+    defaultValues: {
+      guestCount: 2,
+    }
   });
+
+  const dateVal = watch('reservationDate');
+  const timeVal = watch('startTime');
+  const guestsVal = watch('guestCount');
+
+  // Query to check table availability in real-time
+  const { data: availabilityResponse, isFetching: checkingAvailability } = useQuery({
+    queryKey: ['availability', dateVal, timeVal, guestsVal],
+    queryFn: () => apiClient.get(`/reservations/availability?reservationDate=${dateVal}&startTime=${timeVal}&guestCount=${guestsVal}`),
+    enabled: !!(dateVal && timeVal && guestsVal && !errors.reservationDate && !errors.startTime && !errors.guestCount),
+    retry: false,
+    staleTime: 5000,
+  });
+
+  const isAvailable = availabilityResponse?.data?.available;
+  const allocatedTableNumber = availabilityResponse?.data?.table;
 
   const bookMutation = useMutation({
     mutationFn: (data) => apiClient.post('/reservations', data),
@@ -126,10 +145,33 @@ const CreateReservation = () => {
               ></textarea>
             </div>
 
+            {/* Availability Indicator Widget */}
+            {(dateVal && timeVal && guestsVal && !errors.reservationDate && !errors.startTime && !errors.guestCount) && (
+              <div className="p-4 rounded-lg bg-orange-50/30 border border-orange-100 flex items-center justify-between">
+                <span className="text-sm text-gray-600 font-medium">Availability Status:</span>
+                {checkingAvailability ? (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500 font-semibold">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
+                    Checking...
+                  </div>
+                ) : isAvailable ? (
+                  <div className="flex items-center gap-1.5 text-sm text-green-700 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Table Available ({allocatedTableNumber})
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-sm text-red-700 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    Fully Booked
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={bookMutation.isPending}
-              className="w-full py-3 px-4 bg-primary-500 text-white rounded-lg font-bold text-sm hover:bg-primary-600 transition-colors shadow-md shadow-primary-500/10 disabled:bg-primary-300 flex items-center justify-center gap-2"
+              disabled={bookMutation.isPending || checkingAvailability || isAvailable === false}
+              className="w-full py-3 px-4 bg-primary-500 text-white rounded-lg font-bold text-sm hover:bg-primary-600 transition-colors shadow-md shadow-primary-500/10 disabled:bg-primary-300 disabled:shadow-none flex items-center justify-center gap-2"
             >
               {bookMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Booking'}
             </button>

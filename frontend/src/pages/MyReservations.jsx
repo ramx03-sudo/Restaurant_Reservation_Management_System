@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../api/client';
 import DashboardLayout from '../layouts/DashboardLayout';
 import ConfirmationDialog from '../components/ConfirmationDialog';
+import { formatHumanDate, formatHumanTime } from '../utils/dateHelper';
 import { toast } from 'react-hot-toast';
 
 const MyReservations = () => {
@@ -44,7 +45,7 @@ const MyReservations = () => {
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold font-serif text-gray-900">My Reservations</h2>
-          <p className="text-gray-500 font-medium mt-1">Review and manage your upcoming table bookings.</p>
+          <p className="text-gray-500 font-medium mt-1">Review and manage your table bookings.</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden">
@@ -59,7 +60,7 @@ const MyReservations = () => {
                   <tr className="bg-orange-50/20 text-gray-500 text-xs font-bold uppercase tracking-wider border-b border-orange-100">
                     <th className="p-4">Table</th>
                     <th className="p-4">Date</th>
-                    <th className="p-4">Time</th>
+                    <th className="p-4">Time Slot</th>
                     <th className="p-4">Guests</th>
                     <th className="p-4">Notes</th>
                     <th className="p-4">Status</th>
@@ -72,9 +73,9 @@ const MyReservations = () => {
                       <td className="p-4 font-semibold text-gray-800">
                         {res.tableId?.tableNumber || 'Auto-Allocated'}
                       </td>
-                      <td className="p-4 text-gray-600">{res.reservationDate}</td>
-                      <td className="p-4 text-gray-600">{res.startTime} - {res.endTime}</td>
-                      <td className="p-4 text-gray-600">{res.guestCount}</td>
+                      <td className="p-4 text-gray-600 font-semibold">{formatHumanDate(res.reservationDate)}</td>
+                      <td className="p-4 text-gray-600">{formatHumanTime(res.startTime)} - {formatHumanTime(res.endTime)}</td>
+                      <td className="p-4 text-gray-600">{res.guestCount} guests</td>
                       <td className="p-4 text-gray-500 max-w-xs truncate" title={res.notes}>
                         {res.notes || '-'}
                       </td>
@@ -82,7 +83,9 @@ const MyReservations = () => {
                         <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${
                           res.status === 'confirmed' 
                             ? 'bg-green-50 text-green-700' 
-                            : 'bg-red-50 text-red-700'
+                            : res.status === 'cancelled'
+                            ? 'bg-red-50 text-red-700'
+                            : 'bg-blue-50 text-blue-700'
                         }`}>
                           {res.status}
                         </span>
@@ -111,7 +114,7 @@ const MyReservations = () => {
         onClose={() => setIsCancelModalOpen(false)}
         onConfirm={handleConfirmCancel}
         title="Cancel Reservation?"
-        message="Are you sure you want to cancel this reservation? This action cannot be undone."
+        message="Are you sure you want to cancel this reservation? The table will be released immediately."
         confirmText="Yes, Cancel"
       />
     </DashboardLayout>
