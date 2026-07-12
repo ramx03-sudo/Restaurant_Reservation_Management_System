@@ -60,7 +60,7 @@ const CustomerDashboard = () => {
         {/* Welcome Section */}
         <div>
           <h2 className="text-4xl font-bold font-serif tracking-tight">{getGreeting()}, {user?.name}</h2>
-          <p className="text-brand-muted font-medium mt-1.5">Welcome back to Lumina Dining. Let's arrange your next extraordinary evening.</p>
+          <p className="text-brand-muted font-medium mt-1.5">Welcome back to Ram Dining. Let's arrange your next extraordinary evening.</p>
         </div>
 
         {/* Your Next Reservation Card - Luxury Invitation Layout */}

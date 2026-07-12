@@ -47,7 +47,7 @@ const MyReservations = () => {
       <div className="space-y-6 text-brand-text">
         <div>
           <h2 className="text-3xl font-bold font-serif tracking-tight">My Reservations</h2>
-          <p className="text-brand-muted font-medium mt-1">Review and manage your table bookings at Lumina Dining.</p>
+          <p className="text-brand-muted font-medium mt-1">Review and manage your table bookings at Ram Dining.</p>
         </div>
 
         <motion.div 
@@ -64,7 +64,7 @@ const MyReservations = () => {
             <div className="p-16 text-center space-y-4">
               <Calendar className="h-10 w-10 text-brand-border mx-auto" />
               <h3 className="text-lg font-bold font-serif">No reservations yet</h3>
-              <p className="text-brand-muted font-medium max-w-sm mx-auto">Book your first table reservation to experience Lumina's curated dining.</p>
+              <p className="text-brand-muted font-medium max-w-sm mx-auto">Book your first table reservation to experience Ram Dining's curated seating.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">

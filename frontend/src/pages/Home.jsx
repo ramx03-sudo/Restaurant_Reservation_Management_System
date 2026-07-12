@@ -45,7 +45,7 @@ const Home = () => {
           transition={{ duration: 0.5 }}
           className="flex items-center gap-2"
         >
-          <span className="text-xl md:text-2xl font-serif font-bold text-primary-500 tracking-wide">LUMINA</span>
+          <span className="text-xl md:text-2xl font-serif font-bold text-primary-500 tracking-wide">RAM</span>
           <span className="text-xs uppercase tracking-[0.25em] text-brand-muted font-bold mt-1.5">Dining</span>
         </motion.div>
         
@@ -171,7 +171,7 @@ const Home = () => {
       <footer className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12 border-t border-brand-border/40 text-center md:text-left">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-serif font-bold text-brand-text tracking-wide">LUMINA</span>
+            <span className="text-lg font-serif font-bold text-brand-text tracking-wide">RAM</span>
             <span className="text-xs uppercase tracking-[0.2em] text-brand-muted mt-1">Dining</span>
           </div>
           <div className="flex gap-8 text-xs font-semibold text-brand-muted">
@@ -180,7 +180,7 @@ const Home = () => {
             <span className="hover:text-primary-500 cursor-pointer transition-colors">Contact</span>
           </div>
           <p className="text-xs text-brand-muted font-medium">
-            &copy; {new Date().getFullYear()} Lumina Dining. Crafted with Michelin-inspired standards.
+            &copy; {new Date().getFullYear()} Ram Dining. Crafted with Michelin-inspired standards.
           </p>
         </div>
       </footer>

@@ -45,7 +45,7 @@ const DashboardLayout = ({ children }) => {
         {/* Brand Logo */}
         <div className="p-6 border-b border-brand-border/60">
           <Link to="/" className="flex items-center gap-1.5">
-            <span className="text-lg font-serif font-bold text-brand-text tracking-wide">LUMINA</span>
+            <span className="text-lg font-serif font-bold text-brand-text tracking-wide">RAM</span>
             <span className="text-[10px] uppercase tracking-[0.2em] text-brand-muted font-bold mt-1">Dining</span>
           </Link>
         </div>

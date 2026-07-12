@@ -48,7 +48,7 @@ const Login = () => {
       {/* Top Header Ribbon */}
       <header className="absolute top-0 left-0 right-0 w-full max-w-7xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center z-10 border-b border-brand-border/20">
         <Link to="/" className="flex items-center gap-1.5">
-          <span className="text-xl md:text-2xl font-serif font-bold text-primary-500 tracking-wide">LUMINA</span>
+          <span className="text-xl md:text-2xl font-serif font-bold text-primary-500 tracking-wide">RAM</span>
           <span className="text-xs uppercase tracking-[0.25em] text-brand-muted font-bold mt-1.5">Dining</span>
         </Link>
         <Link to="/" className="text-sm font-semibold text-brand-muted hover:text-primary-500 transition-colors flex items-center gap-1.5">

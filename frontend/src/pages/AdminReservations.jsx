@@ -194,7 +194,7 @@ const AdminReservations = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold font-serif tracking-tight">Reservations</h2>
-            <p className="text-brand-muted font-medium mt-1">Manage and edit bookings for Lumina Dining.</p>
+            <p className="text-brand-muted font-medium mt-1">Manage and edit bookings for Ram Dining.</p>
           </div>
 
           <button
