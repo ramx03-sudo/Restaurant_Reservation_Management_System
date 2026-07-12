@@ -10,6 +10,7 @@ import {
   LayoutDashboard, 
   TableProperties, 
   User,
+  Users,
   Menu,
   X
 } from 'lucide-react';
@@ -32,6 +33,7 @@ const DashboardLayout = ({ children }) => {
         { name: 'Admin Dashboard', path: '/admin', icon: LayoutDashboard },
         { name: 'Reservations', path: '/admin/reservations', icon: Calendar },
         { name: 'Manage Tables', path: '/admin/tables', icon: TableProperties },
+        { name: 'Customers', path: '/admin/customers', icon: Users },
       ]
     : [
         { name: 'My Dashboard', path: '/dashboard', icon: LayoutDashboard },

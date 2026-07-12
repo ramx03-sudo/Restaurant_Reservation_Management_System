@@ -15,6 +15,7 @@ import MyReservations from './pages/MyReservations';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminReservations from './pages/AdminReservations';
 import AdminTables from './pages/AdminTables';
+import AdminCustomers from './pages/AdminCustomers';
 
 import './index.css';
 
@@ -79,6 +80,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin={true}>
                   <AdminTables />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/customers"
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminCustomers />
                 </ProtectedRoute>
               }
             />

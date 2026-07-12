@@ -50,6 +50,23 @@ class AuthService {
     return customers.map(user => this.sanitizeUser(user));
   }
 
+  async broadcastEmail(subject, message) {
+    const customers = await userRepository.findCustomers();
+    const emails = customers.map(c => c.email);
+    
+    console.log(`
+==================================================
+[MOCK EMAIL BROADCAST]
+Subject: ${subject}
+Message: ${message}
+Recipient Count: ${emails.length}
+Recipients: ${emails.join(', ')}
+==================================================
+    `);
+    
+    return { sentCount: emails.length, recipients: emails };
+  }
+
   generateToken(user) {
     return jwt.sign(
       { userId: user._id, role: user.role },
