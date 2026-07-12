@@ -45,6 +45,11 @@ class AuthService {
     return this.sanitizeUser(user);
   }
 
+  async getAllCustomers() {
+    const customers = await userRepository.findCustomers();
+    return customers.map(user => this.sanitizeUser(user));
+  }
+
   generateToken(user) {
     return jwt.sign(
       { userId: user._id, role: user.role },

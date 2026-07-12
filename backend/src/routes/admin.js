@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const reservationController = require('../controllers/reservationController');
+const authController = require('../controllers/authController');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const validate = require('../middleware/validate');
@@ -9,6 +10,7 @@ const { updateReservationSchema, createReservationSchema } = require('../validat
 // Admin-only endpoints for managing reservations and metrics
 router.use(auth, admin);
 
+router.get('/customers', authController.getAllCustomers);
 router.get('/reservations', reservationController.getAllReservations);
 router.get('/reservations/date/:date', reservationController.getReservationsByDate);
 router.put('/reservations/:id', validate(updateReservationSchema), reservationController.updateReservation);

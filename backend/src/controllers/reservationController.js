@@ -4,9 +4,15 @@ const AppError = require('../utils/AppError');
 
 exports.createReservation = async (req, res, next) => {
   try {
-    const { reservationDate, startTime, guestCount, notes } = req.body;
+    const { reservationDate, startTime, guestCount, notes, customerId } = req.body;
+    
+    // If admin is booking on behalf of a customer, use the customerId from body
+    const targetCustomerId = (req.user.role === 'admin' && customerId) 
+      ? customerId 
+      : req.user._id;
+
     const reservation = await reservationService.createReservation(
-      req.user._id,
+      targetCustomerId,
       reservationDate,
       startTime,
       guestCount,

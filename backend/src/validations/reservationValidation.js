@@ -10,6 +10,7 @@ const createReservationSchema = z.object({
     startTime: z.string().regex(timeRegex, 'Start time must be in HH:MM format'),
     guestCount: z.number().int().positive('Guest count must be a positive integer'),
     notes: z.string().optional(),
+    customerId: z.string().regex(mongoIdRegex, 'Invalid customer ID').optional(),
   }),
 });
 

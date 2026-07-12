@@ -29,3 +29,12 @@ exports.getProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getAllCustomers = async (req, res, next) => {
+  try {
+    const customers = await authService.getAllCustomers();
+    new ApiResponse(200, customers, 'Customers fetched successfully').send(res);
+  } catch (error) {
+    next(error);
+  }
+};
