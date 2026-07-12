@@ -135,8 +135,7 @@ const AdminTables = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-brand-border/40 pt-4 mt-auto">
-                      <span className="text-xs font-semibold text-brand-muted">Availability</span>
+                    <div className="flex items-center justify-end border-t border-brand-border/40 pt-4 mt-auto">
                       <button
                         onClick={() => handleToggleActive(table._id, table.isActive)}
                         className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer ${
