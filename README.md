@@ -184,9 +184,9 @@ $$\text{Occupancy \%} = \left( \frac{\text{Occupied Active Seats Today}}{\text{T
 - **Blocked**: Intercepted by middleware `admin.js` if trying to access `/api/admin/*` or write to tables `/api/tables`.
 
 ### Administrator
-- **Scope**: Access to Admin Dashboard metrics, seating layouts, and reservation logs.
+- **Scope**: Access to Admin Dashboard metrics, seating layouts, reservation logs, and the customer registry.
 - **APIs Allowed**: Full access across all routes.
-- **Defaults**: A seeded admin account is available at `admin@example.com` / `Password123` for grading.
+- **Defaults**: A seeded admin account is available at `admin@email.com` / `admin123` for grading.
 
 ---
 
@@ -225,7 +225,12 @@ $$\text{Occupancy \%} = \left( \frac{\text{Occupied Active Seats Today}}{\text{T
 - Standard 2-hour duration is fixed on table allocation.
 - No dynamic table joining/splitting.
 
+### UX & Security Enhancements Implemented
+- **Availability Preview Engine**: Customers can preview table availability in real-time on the booking page before completing their reservation.
+- **Customers Registry**: Admins have access to a dedicated Customers tab displaying guest profile details and their historic booking statistics (Total, Active, Cancelled).
+- **Secure Signup Restricting**: User signups are locked to the `'customer'` role by default on both frontend forms and backend validation middleware. Admin profiles can only be configured via secure database seeds.
+- **Clean Luxury UI**: Re-branded as **Ram Dining**, implementing clean layouts, high contrast terracotta active sidebar navigation highlights, and card layouts with redundant placeholders removed.
+
 ### Future Improvements
-- **Real-Time Calendar**: Interactive slot selection screen displaying live slots before submission.
 - **Waitlist Engine**: Queueing bookings when restaurant is full.
 - **Table Joining Logic**: Dynamically merging two adjacent 2-seater tables if a 4-seater is unavailable.
