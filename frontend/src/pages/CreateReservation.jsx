@@ -7,7 +7,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import apiClient from '../api/client';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { toast } from 'react-hot-toast';
-import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle, Calendar, Clock, Users, MessageSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -68,25 +69,47 @@ const CreateReservation = () => {
     bookMutation.mutate(data);
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const formItemVariants = {
+    hidden: { opacity: 0, x: -15 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-8 max-w-2xl text-brand-text"
+      >
         <div>
-          <h2 className="text-3xl font-bold font-serif text-gray-900">Book a Table</h2>
-          <p className="text-gray-500 font-medium mt-1">Our system automatically assigns the smallest available table that fits your party.</p>
+          <h2 className="text-3xl font-bold font-serif tracking-tight text-brand-text">Book a Table</h2>
+          <p className="text-brand-muted font-medium mt-1">Experience elegant culinary hospitality. Tables are dynamically allocated.</p>
         </div>
 
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-orange-100 max-w-2xl">
+        <motion.div 
+          variants={formItemVariants}
+          className="bg-white p-8 rounded-xl shadow-sm border border-brand-border"
+        >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Reservation Date</label>
+              {/* Date Input */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-brand-muted flex items-center gap-1.5 mb-1">
+                  <Calendar className="h-3.5 w-3.5 text-primary-500" />
+                  Date
+                </label>
                 <input
                   type="date"
                   {...register('reservationDate')}
                   min={new Date().toISOString().split('T')[0]}
-                  className={`w-full px-4 py-2.5 rounded-lg border bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${
-                    errors.reservationDate ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-primary-500'
+                  className={`w-full px-4 py-2.5 rounded-lg border bg-brand-bg/50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-semibold ${
+                    errors.reservationDate ? 'border-red-300 focus:border-red-500' : 'border-brand-border focus:border-primary-500'
                   }`}
                 />
                 {errors.reservationDate && (
@@ -94,15 +117,19 @@ const CreateReservation = () => {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time</label>
+              {/* Time Select */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-brand-muted flex items-center gap-1.5 mb-1">
+                  <Clock className="h-3.5 w-3.5 text-primary-500" />
+                  Time Slot
+                </label>
                 <select
                   {...register('startTime')}
-                  className={`w-full px-4 py-2.5 rounded-lg border bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${
-                    errors.startTime ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-primary-500'
+                  className={`w-full px-4 py-2.5 rounded-lg border bg-brand-bg/50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-semibold ${
+                    errors.startTime ? 'border-red-300 focus:border-red-500' : 'border-brand-border focus:border-primary-500'
                   }`}
                 >
-                  <option value="">-- Select Time --</option>
+                  <option value="">-- Choose Time --</option>
                   <option value="12:00">12:00 PM</option>
                   <option value="13:00">1:00 PM</option>
                   <option value="14:00">2:00 PM</option>
@@ -118,16 +145,20 @@ const CreateReservation = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Number of Guests</label>
+            {/* Guest Count */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-brand-muted flex items-center gap-1.5 mb-1">
+                <Users className="h-3.5 w-3.5 text-primary-500" />
+                Guests
+              </label>
               <input
                 type="number"
                 {...register('guestCount')}
                 min="1"
                 max="20"
                 placeholder="2"
-                className={`w-full px-4 py-2.5 rounded-lg border bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 ${
-                  errors.guestCount ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-primary-500'
+                className={`w-full px-4 py-2.5 rounded-lg border bg-brand-bg/50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all font-semibold ${
+                  errors.guestCount ? 'border-red-300 focus:border-red-500' : 'border-brand-border focus:border-primary-500'
                 }`}
               />
               {errors.guestCount && (
@@ -135,32 +166,36 @@ const CreateReservation = () => {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Special Notes / Requests</label>
+            {/* Special Requests */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-brand-muted flex items-center gap-1.5 mb-1">
+                <MessageSquare className="h-3.5 w-3.5 text-primary-500" />
+                Special Notes
+              </label>
               <textarea
                 {...register('notes')}
                 rows="3"
-                placeholder="e.g. Window seat, celebrating a birthday, high chair needed"
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-orange-50/10 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                placeholder="celebrating an anniversary, allergy details, high chair..."
+                className="w-full px-4 py-2.5 rounded-lg border border-brand-border bg-brand-bg/50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 font-medium"
               ></textarea>
             </div>
 
             {/* Availability Indicator Widget */}
             {(dateVal && timeVal && guestsVal && !errors.reservationDate && !errors.startTime && !errors.guestCount) && (
-              <div className="p-4 rounded-lg bg-orange-50/30 border border-orange-100 flex items-center justify-between">
-                <span className="text-sm text-gray-600 font-medium">Availability Status:</span>
+              <div className="p-4 rounded-lg bg-brand-bg border border-brand-border flex items-center justify-between shadow-inner/5">
+                <span className="text-xs text-brand-muted font-bold uppercase tracking-wider">Availability Preview:</span>
                 {checkingAvailability ? (
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500 font-semibold">
+                  <div className="flex items-center gap-1.5 text-xs text-brand-muted font-semibold">
                     <Loader2 className="h-4 w-4 animate-spin text-primary-500" />
-                    Checking...
+                    Checking seating...
                   </div>
                 ) : isAvailable ? (
-                  <div className="flex items-center gap-1.5 text-sm text-green-700 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                  <div className="flex items-center gap-1.5 text-xs text-green-700 font-bold bg-green-50 px-3 py-1 rounded-full border border-green-200">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    Table Available ({allocatedTableNumber})
+                    ✓ Table Available ({allocatedTableNumber} Assigned)
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 text-sm text-red-700 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-200">
+                  <div className="flex items-center gap-1.5 text-xs text-red-700 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-200">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                     Fully Booked
                   </div>
@@ -168,16 +203,17 @@ const CreateReservation = () => {
               </div>
             )}
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={bookMutation.isPending || checkingAvailability || isAvailable === false}
-              className="w-full py-3 px-4 bg-primary-500 text-white rounded-lg font-bold text-sm hover:bg-primary-600 transition-colors shadow-md shadow-primary-500/10 disabled:bg-primary-300 disabled:shadow-none flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 bg-primary-500 text-white rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-primary-600 transition-all shadow-md shadow-primary-500/10 disabled:bg-primary-200 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer"
             >
-              {bookMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Booking'}
+              {bookMutation.isPending ? <Loader2 className="h-4.5 w-4.5 animate-spin" /> : 'Confirm Reservation'}
             </button>
           </form>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   );
 };

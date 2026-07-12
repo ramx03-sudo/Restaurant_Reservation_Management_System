@@ -4,8 +4,9 @@ import apiClient from '../api/client';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { AuthContext } from '../context/AuthContext';
 import { formatHumanDate, formatHumanTime } from '../utils/dateHelper';
-import { Calendar, PlusCircle, Sparkles, Utensils } from 'lucide-react';
+import { PlusCircle, Sparkles, Utensils, Calendar, CheckCircle2, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const CustomerDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -17,7 +18,7 @@ const CustomerDashboard = () => {
 
   const reservations = reservationsResponse?.data || [];
   
-  // Find the next upcoming confirmed reservation (date >= today)
+  // Find the next upcoming confirmed reservation
   const todayStr = new Date().toLocaleDateString('en-CA');
   
   const upcomingReservations = reservations
@@ -31,101 +32,145 @@ const CustomerDashboard = () => {
 
   const nextReservation = upcomingReservations[0];
 
+  const getGreeting = () => {
+    const hr = new Date().getHours();
+    if (hr < 12) return 'Good Morning';
+    if (hr < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-8 text-brand-text"
+      >
         {/* Welcome Section */}
         <div>
-          <h2 className="text-3xl font-bold font-serif text-gray-900">Hello, {user?.name}!</h2>
-          <p className="text-gray-500 font-medium mt-1">Ready for a premium dining experience?</p>
+          <h2 className="text-4xl font-bold font-serif tracking-tight">{getGreeting()}, {user?.name}</h2>
+          <p className="text-brand-muted font-medium mt-1.5">Welcome back to Lumina Dining. Let's arrange your next extraordinary evening.</p>
         </div>
 
-        {/* Your Next Reservation Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden">
+        {/* Your Next Reservation Card - Luxury Invitation Layout */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -3 }}
+          className="bg-white rounded-xl shadow-sm border border-brand-border overflow-hidden"
+        >
           <div className="p-6 bg-gradient-to-r from-primary-500 to-orange-400 text-white flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <Sparkles className="h-6 w-6" />
-              <h3 className="text-xl font-bold font-serif">Your Next Reservation</h3>
+              <Sparkles className="h-5 w-5" />
+              <h3 className="text-lg font-bold font-serif tracking-wide">Your Upcoming Reservation</h3>
             </div>
             <Link 
               to="/dashboard/book" 
-              className="flex items-center gap-1.5 text-xs font-bold bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-bold bg-white/25 hover:bg-white/35 text-white px-3 py-1.5 rounded-lg border border-white/10 transition-colors uppercase tracking-wider"
             >
               <PlusCircle className="h-4 w-4" />
-              New Booking
+              Reserve Table
             </Link>
           </div>
 
           <div className="p-8">
             {isLoading ? (
-              <div className="flex items-center justify-center py-4">
+              <div className="flex items-center justify-center py-6">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-500 border-t-transparent"></div>
               </div>
             ) : nextReservation ? (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-                <div className="bg-orange-50/40 p-4 rounded-lg border border-orange-100/50 flex flex-col justify-center text-center">
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Date</span>
-                  <span className="text-lg font-bold text-gray-800">{formatHumanDate(nextReservation.reservationDate)}</span>
-                </div>
-                
-                <div className="bg-orange-50/40 p-4 rounded-lg border border-orange-100/50 flex flex-col justify-center text-center">
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Time</span>
-                  <span className="text-lg font-bold text-gray-800">{formatHumanTime(nextReservation.startTime)}</span>
-                </div>
+              <div className="space-y-6">
+                {/* Visual Invitation Details */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center">
+                  <div className="bg-brand-bg p-5 rounded-xl border border-brand-border/60 text-center">
+                    <span className="text-[10px] text-brand-muted font-bold uppercase tracking-widest block mb-1">Date</span>
+                    <span className="text-base font-bold text-brand-text">{formatHumanDate(nextReservation.reservationDate)}</span>
+                  </div>
+                  
+                  <div className="bg-brand-bg p-5 rounded-xl border border-brand-border/60 text-center">
+                    <span className="text-[10px] text-brand-muted font-bold uppercase tracking-widest block mb-1">Time</span>
+                    <span className="text-base font-bold text-brand-text">{formatHumanTime(nextReservation.startTime)}</span>
+                  </div>
 
-                <div className="bg-orange-50/40 p-4 rounded-lg border border-orange-100/50 flex flex-col justify-center text-center">
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Guests</span>
-                  <span className="text-lg font-bold text-gray-800">{nextReservation.guestCount} People</span>
-                </div>
+                  <div className="bg-brand-bg p-5 rounded-xl border border-brand-border/60 text-center">
+                    <span className="text-[10px] text-brand-muted font-bold uppercase tracking-widest block mb-1">Guests</span>
+                    <span className="text-base font-bold text-brand-text">{nextReservation.guestCount} People</span>
+                  </div>
 
-                <div className="bg-orange-50/40 p-4 rounded-lg border border-orange-100/50 flex flex-col justify-center text-center">
-                  <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1">Table</span>
-                  <span className="text-lg font-bold text-gray-800">{nextReservation.tableId?.tableNumber}</span>
+                  <div className="bg-brand-bg p-5 rounded-xl border border-brand-border/60 text-center">
+                    <span className="text-[10px] text-brand-muted font-bold uppercase tracking-widest block mb-1">Table</span>
+                    <span className="text-base font-bold text-brand-text">{nextReservation.tableId?.tableNumber}</span>
+                  </div>
                 </div>
 
                 {nextReservation.notes && (
-                  <div className="md:col-span-4 mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-600 border border-gray-100">
-                    <span className="font-semibold text-gray-700">Special Notes:</span> {nextReservation.notes}
+                  <div className="p-4 bg-brand-bg rounded-lg text-sm text-brand-muted border border-brand-border/50">
+                    <span className="font-semibold text-brand-text">Special Requests:</span> "{nextReservation.notes}"
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <Utensils className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium mb-4">No upcoming bookings. Reserve a table tonight!</p>
-                <Link to="/dashboard/book" className="btn btn-primary px-6 py-2.5">
-                  Book a Table Now
+              <div className="text-center py-8">
+                <Utensils className="h-10 w-10 text-brand-border mx-auto mb-3" />
+                <p className="text-brand-muted font-medium mb-5">You don't have any tables reserved. Experience tonight's chef tasting menu.</p>
+                <Link to="/dashboard/book" className="btn btn-primary px-6 py-3 font-bold text-xs tracking-wider uppercase">
+                  Book a Table
                 </Link>
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Quick History Card */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-100">
-          <h3 className="text-xl font-bold font-serif text-gray-900 mb-4">Quick Stats</h3>
+        {/* Quick Stats Grid */}
+        <motion.div variants={cardVariants} className="space-y-4">
+          <h3 className="text-xl font-bold font-serif tracking-tight">Your Activity Overview</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-4 rounded-lg bg-orange-50/20 border border-orange-100 flex justify-between items-center">
-              <span className="text-sm font-semibold text-gray-500">Total Bookings</span>
-              <span className="text-xl font-bold text-gray-800">{isLoading ? '...' : reservations.length}</span>
+            <div className="bg-white p-6 rounded-xl border border-brand-border flex items-center justify-between shadow-sm">
+              <div className="space-y-1">
+                <span className="text-xs text-brand-muted font-bold uppercase tracking-wider">Total Bookings</span>
+                <h4 className="text-3xl font-bold text-brand-text">{isLoading ? '...' : reservations.length}</h4>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center text-primary-500">
+                <Calendar className="h-5 w-5" />
+              </div>
             </div>
             
-            <div className="p-4 rounded-lg bg-orange-50/20 border border-orange-100 flex justify-between items-center">
-              <span className="text-sm font-semibold text-gray-500">Active Confirmed</span>
-              <span className="text-xl font-bold text-green-700">
-                {isLoading ? '...' : reservations.filter(r => r.status === 'confirmed').length}
-              </span>
+            <div className="bg-white p-6 rounded-xl border border-brand-border flex items-center justify-between shadow-sm">
+              <div className="space-y-1">
+                <span className="text-xs text-brand-muted font-bold uppercase tracking-wider">Active Bookings</span>
+                <h4 className="text-3xl font-bold text-green-700">
+                  {isLoading ? '...' : reservations.filter(r => r.status === 'confirmed').length}
+                </h4>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-orange-50/20 border border-orange-100 flex justify-between items-center">
-              <span className="text-sm font-semibold text-gray-500">Cancelled / Finished</span>
-              <span className="text-xl font-bold text-red-600">
-                {isLoading ? '...' : reservations.filter(r => r.status !== 'confirmed').length}
-              </span>
+            <div className="bg-white p-6 rounded-xl border border-brand-border flex items-center justify-between shadow-sm">
+              <div className="space-y-1">
+                <span className="text-xs text-brand-muted font-bold uppercase tracking-wider">Past / Cancelled</span>
+                <h4 className="text-3xl font-bold text-brand-muted">
+                  {isLoading ? '...' : reservations.filter(r => r.status !== 'confirmed').length}
+                </h4>
+              </div>
+              <div className="h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center text-brand-muted">
+                <XCircle className="h-5 w-5" />
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </DashboardLayout>
   );
 };

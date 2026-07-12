@@ -251,6 +251,18 @@ class ReservationService {
         }
       : null;
 
+    // Compute last 7 days reservations counts
+    const dailyStats = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('en-CA');
+      const count = reservations.filter(r => r.reservationDate === dateStr && r.status === 'confirmed').length;
+      
+      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      dailyStats.push({ date: label, count });
+    }
+
     return {
       totalReservations,
       activeReservations,
@@ -258,7 +270,8 @@ class ReservationService {
       totalTables,
       occupancyPercentage,
       todayCount,
-      nextReservation
+      nextReservation,
+      dailyStats
     };
   }
 }

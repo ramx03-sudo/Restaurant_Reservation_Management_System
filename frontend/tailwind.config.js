@@ -6,19 +6,30 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['"Playfair Display"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
       colors: {
+        brand: {
+          bg: '#FAF8F5',
+          card: '#FFFFFF',
+          border: '#E7DFD7',
+          text: '#111827',
+          muted: '#6B7280',
+        },
         primary: {
-          50: '#fdf8f6',
-          100: '#fbeee9',
-          200: '#f7ddd3',
-          300: '#f0c4b4',
-          400: '#e5a18a',
-          500: '#d97757', // Main warm peach
-          600: '#c26143',
-          700: '#a24e34',
-          800: '#82402c',
-          900: '#6b3627',
-          950: '#3a1a12',
+          50: '#fefcfb',
+          100: '#fdf6f2',
+          200: '#fae6dc',
+          300: '#f5ccbe',
+          400: '#eeab97',
+          500: '#D97757', // Brand Primary
+          600: '#c56141',
+          700: '#a34c2f',
+          800: '#823c25',
+          900: '#6c321e',
+          950: '#3e1a0e',
         },
       },
     },
