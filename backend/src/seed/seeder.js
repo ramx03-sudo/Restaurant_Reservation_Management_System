@@ -22,10 +22,10 @@ const seedDB = async () => {
 
     // Seed Admin User
     console.log('Seeding Admin user...');
-    const passwordHash = await bcrypt.hash('Password123', 10);
+    const passwordHash = await bcrypt.hash('admin123', 10);
     await User.create({
-      name: 'Restaurant Admin',
-      email: 'admin@example.com',
+      name: 'Sriram Mamillapalli',
+      email: 'admin@email.com',
       passwordHash,
       role: 'admin'
     });

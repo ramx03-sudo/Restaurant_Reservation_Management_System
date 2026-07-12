@@ -15,7 +15,7 @@ class AuthService {
       name,
       email,
       passwordHash,
-      role: role === 'admin' ? 'admin' : 'customer'
+      role: 'customer'
     });
 
     const token = this.generateToken(user);

@@ -12,7 +12,6 @@ const registerSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['customer', 'admin']),
 });
 
 const Register = () => {
@@ -26,15 +25,12 @@ const Register = () => {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      role: 'customer',
-    }
   });
 
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const user = await registerUser(data.name, data.email, data.password, data.role);
+      const user = await registerUser(data.name, data.email, data.password, 'customer');
       toast.success('Registration successful!');
       if (user.role === 'admin') {
         navigate('/admin');
@@ -112,16 +108,7 @@ const Register = () => {
             {errors.password && <p className="mt-1 text-xs text-red-600 font-semibold">{errors.password.message}</p>}
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-brand-muted mb-1">Role (for testing purposes)</label>
-            <select
-              {...register('role')}
-              className="w-full px-4 py-2.5 rounded-lg border border-brand-border bg-brand-bg/50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 font-semibold text-sm"
-            >
-              <option value="customer">Customer</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+
 
           <button
             type="submit"
