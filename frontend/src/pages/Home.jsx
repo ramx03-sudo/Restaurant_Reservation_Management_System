@@ -72,14 +72,6 @@ const Home = () => {
           animate="visible"
           className="w-full max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-24 text-center space-y-12"
         >
-          {/* Tagline */}
-          <motion.div 
-            variants={itemVariants} 
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 border border-primary-200/50 text-xs font-bold uppercase tracking-wider text-primary-600"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Michelin-Inspired Table Allocation
-          </motion.div>
 
           {/* Heading */}
           <motion.h1 
@@ -172,52 +164,7 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Statistics Banner */}
-        <section className="w-full bg-white border-t border-b border-brand-border/40 py-16">
-          <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="space-y-2"
-            >
-              <div className="h-8 w-8 mx-auto text-primary-500 flex items-center justify-center">
-                <ShieldCheck className="h-7 w-7" />
-              </div>
-              <div className="text-4xl font-serif font-bold text-brand-text">5,000+</div>
-              <div className="text-xs uppercase tracking-wider font-bold text-brand-muted">Reservations Managed</div>
-            </motion.div>
-            
-            <motion.div 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.15 }}
-              className="space-y-2"
-            >
-              <div className="h-8 w-8 mx-auto text-primary-500 flex items-center justify-center">
-                <Heart className="h-7 w-7" />
-              </div>
-              <div className="text-4xl font-serif font-bold text-brand-text">98%</div>
-              <div className="text-xs uppercase tracking-wider font-bold text-brand-muted">Guest Satisfaction</div>
-            </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="space-y-2"
-            >
-              <div className="h-8 w-8 mx-auto text-primary-500 flex items-center justify-center">
-                <Clock className="h-7 w-7" />
-              </div>
-              <div className="text-4xl font-serif font-bold text-brand-text">24 / 7</div>
-              <div className="text-xs uppercase tracking-wider font-bold text-brand-muted">Live Availability</div>
-            </motion.div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
